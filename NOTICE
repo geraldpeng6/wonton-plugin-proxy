@@ -5,7 +5,7 @@ Official logo: icon.png, from Meta.png in the v1.19.33 source release:
 https://github.com/MetaCubeX/mihomo/blob/v1.19.33/Meta.png
 The original image is placed on white without changing its colors, proportions or artwork.
 The upstream LICENSE does not specify an individual copyright notice for the logo.
-The original application and logo are distributed under GPL-3.0-only; this plugin neither
+The original application and logo are distributed under GPL-3.0; this plugin neither
 modifies nor republishes the application image. Source:
 https://github.com/MetaCubeX/mihomo/tree/v1.19.33
 

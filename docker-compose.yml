@@ -1,9 +1,9 @@
 services:
   init:
-    image: &python docker.io/library/python:3.14.5-alpine3.23@sha256:5a824eb82cc75361f98611f3cfc5091ea33f10a6ccea4d4ebdabbc523b9a1614
+    image: docker.io/library/python:3.14.5-alpine3.23@sha256:5a824eb82cc75361f98611f3cfc5091ea33f10a6ccea4d4ebdabbc523b9a1614
     user: "${PUID}:${PGID}"
     command: [python, /wonton/subscription.py, init]
-    environment: &configuration
+    environment:
       CONTROLLER_SECRET: ${WONTON_SECRET_CONTROLLER}
       LAN_USER: ${WONTON_OWNER_NAME}
       LAN_PASSWORD: ${WONTON_SECRET_LAN_PASSWORD}
@@ -40,11 +40,14 @@ services:
       start_period: 30s
       start_interval: 1s
   subscription:
-    image: *python
+    image: docker.io/library/python:3.14.5-alpine3.23@sha256:5a824eb82cc75361f98611f3cfc5091ea33f10a6ccea4d4ebdabbc523b9a1614
     user: "${PUID}:${PGID}"
     command: [python, /wonton/subscription.py]
     environment:
-      <<: *configuration
+      CONTROLLER_SECRET: ${WONTON_SECRET_CONTROLLER}
+      LAN_USER: ${WONTON_OWNER_NAME}
+      LAN_PASSWORD: ${WONTON_SECRET_LAN_PASSWORD}
+      APP_URL: ${WONTON_APP_URL}
       # Subscription bootstrap must not depend on the proxy this plugin is creating.
       HTTP_PROXY: ""
       HTTPS_PROXY: ""

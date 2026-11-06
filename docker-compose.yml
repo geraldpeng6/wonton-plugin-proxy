@@ -1,6 +1,6 @@
 services:
   init:
-    image: docker.io/library/python:3.14.5-alpine3.23@sha256:5a824eb82cc75361f98611f3cfc5091ea33f10a6ccea4d4ebdabbc523b9a1614
+    image: docker.io/library/python:3.15.0-alpine3.23@sha256:d64bc17e0dff27c5c4a31f616450d032aa73d6325855127ce3a305bf1384c8d5
     user: "${PUID}:${PGID}"
     command: [python, /wonton/subscription.py, init]
     environment:
@@ -40,7 +40,7 @@ services:
       start_period: 30s
       start_interval: 1s
   subscription:
-    image: docker.io/library/python:3.14.5-alpine3.23@sha256:5a824eb82cc75361f98611f3cfc5091ea33f10a6ccea4d4ebdabbc523b9a1614
+    image: docker.io/library/python:3.15.0-alpine3.23@sha256:d64bc17e0dff27c5c4a31f616450d032aa73d6325855127ce3a305bf1384c8d5
     user: "${PUID}:${PGID}"
     command: [python, /wonton/subscription.py]
     environment:

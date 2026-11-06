@@ -17,7 +17,7 @@ DATA = Path('/data')
 URL_FILE = DATA / 'subscription.url'
 CONFIG_FILE = DATA / 'config.json'
 SECRET = os.environ['CONTROLLER_SECRET']
-CONTROLLER = 'http://mihomo:9090'
+CONTROLLER = 'http://proxy:9090'
 LOCK = threading.Lock()
 DIRECT = build_opener(ProxyHandler({}))
 MAX_BYTES = 4 * 1024 * 1024
@@ -127,7 +127,7 @@ class Handler(BaseHTTPRequestHandler):
                 proxies = controller('/providers/proxies')['providers'].get('subscription')
                 self.reply(200, {'configured': URL_FILE.is_file(), 'nodes': len(proxies['proxies']) if proxies else 0})
             except (OSError, ValueError, KeyError, TypeError):
-                self.reply(503, {'error': 'Mihomo controller unavailable'})
+                self.reply(503, {'error': 'Proxy controller unavailable'})
         elif self.path == '/provider':
             self.provider()
         else:
@@ -138,7 +138,8 @@ class Handler(BaseHTTPRequestHandler):
             if not URL_FILE.is_file():
                 self.reply(409, {'error': 'Subscription is not configured'})
                 return
-            request = Request(URL_FILE.read_text(), headers={'User-Agent': 'mihomo'})
+            # Subscription servers use this protocol identifier to return Clash-compatible YAML.
+            request = Request(URL_FILE.read_text(), headers={'User-Agent': 'clash'})
             with build_opener().open(request, timeout=30) as response:
                 body = response.read(MAX_BYTES + 1)
                 if len(body) > MAX_BYTES:
@@ -188,16 +189,16 @@ class Handler(BaseHTTPRequestHandler):
                 self.reply(200, {'saved': True, 'nodes': len(provider['proxies'])})
         except HTTPError as error:
             # Only our own fixed reason phrases cross this boundary; never echo upstream YAML errors.
-            message = 'Mihomo rejected the subscription format; URL saved'
+            message = 'Proxy rejected the subscription format; URL saved'
             try:
                 detail = json.loads(error.read(MAX_BYTES)).get('message', '')
                 if detail.startswith('502 Subscription '):
                     message = detail.removeprefix('502 ') + '; URL saved'
             except (ValueError, OSError):
-                message = f'Mihomo controller returned HTTP {error.code}; URL saved'
+                message = f'Proxy controller returned HTTP {error.code}; URL saved'
             self.reply(502, {'error': message})
         except (OSError, ValueError, KeyError, TypeError):
-            self.reply(503, {'error': 'Mihomo controller unavailable; URL saved, update not confirmed'})
+            self.reply(503, {'error': 'Proxy controller unavailable; URL saved, update not confirmed'})
         finally:
             LOCK.release()
 
@@ -209,5 +210,5 @@ if len(sys.argv) > 1 and sys.argv[1] == 'init':
     atomic_write(CONFIG_FILE, json.dumps(configuration(URL_FILE.is_file())).encode())
 else:
     if not CONFIG_FILE.is_file():
-        raise RuntimeError('Mihomo configuration is missing')
+        raise RuntimeError('Proxy configuration is missing')
     ThreadingHTTPServer(('0.0.0.0', 8080), Handler).serve_forever()

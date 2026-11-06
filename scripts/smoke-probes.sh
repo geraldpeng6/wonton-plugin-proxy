@@ -1,6 +1,6 @@
-# Mihomo has a shared controller identity, not application user accounts.
+# The proxy has a shared controller identity, not application user accounts.
 # A valid controller response proves the gateway supplied its private bearer credential.
-web_assert() { grep -q '<title>Mihomo</title>'; }
+web_assert() { grep -q '<title>Proxy</title>'; }
 
 identity_check() {
   local reply

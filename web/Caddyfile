@@ -22,6 +22,6 @@
 		file_server
 	}
 	handle {
-		reverse_proxy mihomo:9090
+		reverse_proxy proxy:9090
 	}
 }

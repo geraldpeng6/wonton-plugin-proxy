@@ -11,9 +11,9 @@ https://github.com/MetaCubeX/mihomo/tree/v1.19.33
 
 The Mihomo and MetaCubeX names and logo belong to their respective owners.
 This is an independent Wonton integration, not an official MetaCubeX product or endorsement.
-The software license does not grant trademark rights. The upstream README also requests that
-unaffiliated downstream projects not include "mihomo" in their names; this integration's
-repository and plugin identifier were assigned by Wonton. No upstream authorization is claimed.
+The software license does not grant trademark rights. To respect the upstream naming request,
+this independent plugin is named Proxy (app.wonton.proxy), not after the upstream application.
+No upstream authorization is claimed.
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007

@@ -1,74 +1,152 @@
-# 示例插件：nginx 显示一个网页，向登录的人问好。照着 README 的“写插件”换成你的应用。
 services:
+  init:
+    image: &python docker.io/library/python:3.14.5-alpine3.23@sha256:5a824eb82cc75361f98611f3cfc5091ea33f10a6ccea4d4ebdabbc523b9a1614
+    user: "${PUID}:${PGID}"
+    command: [python, /wonton/subscription.py, init]
+    environment: &configuration
+      CONTROLLER_SECRET: ${WONTON_SECRET_CONTROLLER}
+      LAN_USER: ${WONTON_OWNER_NAME}
+      LAN_PASSWORD: ${WONTON_SECRET_LAN_PASSWORD}
+      APP_URL: ${WONTON_APP_URL}
+    volumes:
+      - ${WONTON_APP_DATA}/proxy:/data
+    configs:
+      - source: subscription
+        target: /wonton/subscription.py
+    restart: "no"
+  proxy:
+    image: docker.io/metacubex/mihomo:v1.19.33@sha256:9211361a3ed85305383288d38c05e85862d6d5a590c10007c37fc059cca82e9c
+    user: "${PUID}:${PGID}"
+    entrypoint: [/bin/sh, -ec]
+    command: ['umask 077; exec /mihomo -d /data -f /data/config.json']
+    volumes:
+      - ${WONTON_APP_DATA}/proxy:/data
+    # Shadow the upstream VOLUME to avoid an untracked anonymous volume; this path is not used.
+    tmpfs: [/root/.config/mihomo]
+    environment:
+      CONTROLLER_SECRET: ${WONTON_SECRET_CONTROLLER}
+      # This service is the upstream proxy itself; using the platform relay would create a loop.
+      HTTP_PROXY: ""
+      HTTPS_PROXY: ""
+      http_proxy: ""
+      https_proxy: ""
+    depends_on:
+      init: { condition: service_completed_successfully }
+      subscription: { condition: service_healthy }
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null --header="Authorization: Bearer $$CONTROLLER_SECRET" http://127.0.0.1:9090/version']
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      start_interval: 1s
+  subscription:
+    image: *python
+    user: "${PUID}:${PGID}"
+    command: [python, /wonton/subscription.py]
+    environment:
+      <<: *configuration
+      # Subscription bootstrap must not depend on the proxy this plugin is creating.
+      HTTP_PROXY: ""
+      HTTPS_PROXY: ""
+      http_proxy: ""
+      https_proxy: ""
+    volumes:
+      - ${WONTON_APP_DATA}/proxy:/data
+    configs:
+      - source: subscription
+        target: /wonton/subscription.py
+      - source: subscription-page
+        target: /wonton/subscription.html
+    depends_on:
+      init: { condition: service_completed_successfully }
+    healthcheck:
+      test: [CMD, python, -c, 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8080/healthz", timeout=3)']
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      start_interval: 1s
   web:
-    # 镜像按摘要固定（多架构镜像写清单列表的摘要），标签只给人看。
-    image: nginx:1.30.6-alpine@sha256:0e52bd054126cdc040b1276c0af347aeb02a41b9cfe305d6094767ac30e97949
-    # 包里的文件经 configs 交给容器（核心在启动前写进去），不能用卷挂载。
+    image: ghcr.io/zephyruso/zashboard:v3.30.0@sha256:a80a1b734f075734f04f1638c86a3a5b635b8273750bd5b877608672febf1029
+    user: "${PUID}:${PGID}"
+    command: [caddy, run, --config, /wonton/Caddyfile, --adapter, caddyfile]
+    environment:
+      CONTROLLER_SECRET: ${WONTON_SECRET_CONTROLLER}
+      XDG_CONFIG_HOME: /tmp/caddy-config
+      XDG_DATA_HOME: /tmp/caddy-data
     configs:
       - source: site
-        target: /etc/nginx/conf.d/default.conf
+        target: /wonton/Caddyfile
       - source: page
-        target: /usr/share/nginx/html/index.html
-      - source: tokens
-        target: /usr/share/nginx/html/tokens.css
+        target: /wonton/index.html
+    depends_on:
+      proxy: { condition: service_healthy }
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      test: [CMD-SHELL, 'wget -q -O /dev/null --header="Authorization: Bearer $$CONTROLLER_SECRET" http://127.0.0.1:8080/version && wget -q -O /dev/null --header="Authorization: Bearer $$CONTROLLER_SECRET" http://127.0.0.1:8080/dashboard/index.html']
       interval: 30s
       timeout: 5s
       start_period: 30s
       start_interval: 1s
 
 configs:
-  site:
-    file: web/default.conf
-  page:
-    file: web/index.html
-  tokens:
-    file: web/tokens.css
+  site: { file: web/Caddyfile }
+  page: { file: web/index.html }
+  subscription: { file: web/subscription.py }
+  subscription-page: { file: web/subscription.html }
 
 x-wonton:
-  spec: "0.5"
-  # 换成你自己的：反向域名形式，装上以后不能改。
-  id: app.example.hello
-  version: 0.1.1
+  spec: "0.4"
+  id: app.wonton.proxy
+  version: 0.1.0
   kind: app
-  title: { zh: 你好, en: Hello }
-  description: { zh: 向登录的人问好的示例网页, en: An example page that greets whoever is signed in }
-  icon: icon.svg
+  title: { zh: 代理, en: Proxy }
+  description:
+    zh: 填一次订阅，让云吞插件通过你选择的节点出网
+    en: Add your subscription once and route Wonton plugins through your chosen proxy
+  icon: icon.png
   notices: [NOTICE]
-  screenshots: [screenshots/home.png]
-  author: { name: Example }
-  homepage: https://nginx.org
-  # 应用（这里是 nginx）的许可证；插件包自己的许可证写在仓库的 LICENSE 里。
-  license: BSD-2-Clause
+  screenshots: [screenshots/home.png, screenshots/subscription.png]
+  author: { name: Wonton, url: https://github.com/geraldpeng6 }
+  homepage: https://wiki.metacubex.one
+  license: GPL-3.0-only
   tags:
-    zh: [工具]
-    en: [Tools]
+    zh: [网络]
+    en: [Network]
   about:
     zh: |
-      一个示例网页：登录以后，页面会向你问好。新建插件时可以照着改。
+      保存一个 Clash / Mihomo 格式的订阅，在 zashboard 里管理节点、流量和连接。订阅每小时更新，节点选择随插件数据保存。
+
+      订阅链接保存后不会回显。未配置或没有节点时会如实提示，流量不会自动改走直连。
+
+      可以在云吞里选择它作为插件的出网代理。给家里其他设备用的 HTTP / SOCKS 端口默认关闭；打开后从插件详情复制地址和账号。
     en: |
-      An example page: once you are signed in, the page says hello. Copy it as a starting point for a new plugin.
-  release_notes: { zh: 名字和说明更新。, en: Product name and description update. }
+      Save a Clash / Mihomo subscription and manage nodes, traffic and connections in zashboard. Subscriptions refresh hourly; node selection persists with plugin data.
+
+      Saved subscription URLs are never displayed. Missing subscriptions and empty node lists are shown honestly; traffic never silently falls back to a direct connection.
+
+      Select it in Wonton as the egress proxy for plugins. LAN HTTP / SOCKS access is off by default; enable it and copy the address and credentials from plugin details.
+  release_notes:
+    zh: 首次提供基于 mihomo 和 zashboard 的代理、订阅配置和默认关闭的局域网访问。
+    en: Introduces a proxy based on mihomo and zashboard, subscription setup and optional LAN access.
   webui:
     service: web
-    port: 80
-    # 应用不认 OIDC 时，由网关在请求上加上用户名（README 的“网页入口和登录”）。
+    port: 8080
     sso: proxy
     proxy:
       headers:
-        Remote-User: "{user}"
-  # 能放到底栏的页面（README 的“底栏页面”）。放不放由用户决定，插件改不了。
-  tabs:
-    - id: home
-      title: { zh: 主页, en: Home }
-      icon: tabs/home.svg
-      icon_selected: tabs/home-fill.svg
-      path: /
-      # 这个页面没做适配，用默认的 inset：页面夹在 App 的栏中间，不会被挡。
-      # 想让内容从栏下滚过，写 layout: edge-to-edge，并用 --wonton-inset-* 留出栏的位置。
-  permissions: []
-  # 上游 nginx 官方镜像，amd64 和 arm64 都有；上游没写最低内存，按本机空闲实测取整（实测约 24M，取 64M）。
+        Authorization: "Bearer {secret:controller}"
+  provides:
+    egress_proxy: { service: proxy, port: 7890 }
+  # The proxy needs the same username shown by lan.client, which requires owner.identity for interpolation.
+  permissions: [network.egress, egress.proxy, network.lan, owner.identity]
+  lan:
+    ports:
+      - { service: proxy, port: 7890 }
+    client:
+      address: "http://{host}:7890"
+      username: "{user}"
+      password: "{secret:lan_password}"
+  secrets:
+    controller: { generate: { bytes: 32 } }
+    lan_password: { generate: { bytes: 24 } }
   requirements:
     arch: [amd64, arm64]
-    memory: 64M

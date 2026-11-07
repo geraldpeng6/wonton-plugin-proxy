@@ -99,7 +99,7 @@ configs:
 x-wonton:
   spec: "0.7"
   id: app.wonton.proxy
-  version: 0.1.0
+  version: 0.1.1
   kind: app
   title: { zh: 代理, en: Proxy }
   description:
@@ -128,8 +128,8 @@ x-wonton:
 
       Select it in Wonton as the egress proxy for plugins. LAN HTTP / SOCKS access is off by default; enable it and copy the address and credentials from plugin details.
   release_notes:
-    zh: 首次提供基于 mihomo 和 zashboard 的代理、订阅配置和默认关闭的局域网访问。
-    en: Introduces a proxy based on mihomo and zashboard, subscription setup and optional LAN access.
+    zh: 清单声明 spec 0.7（用到 provides.egress_proxy 和 egress.proxy 权限项），插件包内容与 0.1.0 相同。
+    en: Declares spec 0.7 for provides.egress_proxy and the egress.proxy permission; the package itself is unchanged from 0.1.0.
   webui:
     service: web
     port: 8080

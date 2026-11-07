@@ -99,7 +99,7 @@ configs:
 x-wonton:
   spec: "0.7"
   id: app.wonton.proxy
-  version: 0.1.1
+  version: 0.1.2
   kind: app
   title: { zh: 代理, en: Proxy }
   description:
@@ -128,8 +128,8 @@ x-wonton:
 
       Select it in Wonton as the egress proxy for plugins. LAN HTTP / SOCKS access is off by default; enable it and copy the address and credentials from plugin details.
   release_notes:
-    zh: 清单声明 spec 0.7（用到 provides.egress_proxy 和 egress.proxy 权限项），插件包内容与 0.1.0 相同。
-    en: Declares spec 0.7 for provides.egress_proxy and the egress.proxy permission; the package itself is unchanged from 0.1.0.
+    zh: 清单声明 spec 0.7（用到 provides.egress_proxy 和 egress.proxy 权限项）；订阅脚本的基础镜像随 Dependabot 升到 Python 3.15。
+    en: Declares spec 0.7 for provides.egress_proxy and the egress.proxy permission; the subscription helper's base image moves to Python 3.15 via Dependabot.
   webui:
     service: web
     port: 8080

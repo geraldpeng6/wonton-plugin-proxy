@@ -97,7 +97,7 @@ configs:
   subscription-page: { file: web/subscription.html }
 
 x-wonton:
-  spec: "0.4"
+  spec: "0.7"
   id: app.wonton.proxy
   version: 0.1.0
   kind: app

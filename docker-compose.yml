@@ -1,6 +1,6 @@
 services:
   init:
-    image: docker.io/library/python:3.15.0-alpine3.23@sha256:d64bc17e0dff27c5c4a31f616450d032aa73d6325855127ce3a305bf1384c8d5
+    image: docker.io/library/python:3.15.2-alpine3.23@sha256:8d77d813a53e534dec9e1e5182cbd5b651b70d63b27e4ea7c1f616b37cf9aad2
     user: "${PUID}:${PGID}"
     command: [python, /wonton/subscription.py, init]
     environment:
@@ -40,7 +40,7 @@ services:
       start_period: 30s
       start_interval: 1s
   subscription:
-    image: docker.io/library/python:3.15.0-alpine3.23@sha256:d64bc17e0dff27c5c4a31f616450d032aa73d6325855127ce3a305bf1384c8d5
+    image: docker.io/library/python:3.15.2-alpine3.23@sha256:8d77d813a53e534dec9e1e5182cbd5b651b70d63b27e4ea7c1f616b37cf9aad2
     user: "${PUID}:${PGID}"
     command: [python, /wonton/subscription.py]
     environment:
@@ -99,7 +99,7 @@ configs:
 x-wonton:
   spec: "0.7"
   id: app.wonton.proxy
-  version: 0.1.2
+  version: 0.1.3
   kind: app
   title: { zh: 代理, en: Proxy }
   description:
@@ -128,8 +128,8 @@ x-wonton:
 
       Select it in Wonton as the egress proxy for plugins. LAN HTTP / SOCKS access is off by default; enable it and copy the address and credentials from plugin details.
   release_notes:
-    zh: 清单声明 spec 0.7（用到 provides.egress_proxy 和 egress.proxy 权限项）；订阅脚本的基础镜像随 Dependabot 升到 Python 3.15。
-    en: Declares spec 0.7 for provides.egress_proxy and the egress.proxy permission; the subscription helper's base image moves to Python 3.15 via Dependabot.
+    zh: 清单声明 spec 0.7（用到 provides.egress_proxy 和 egress.proxy 权限项）；订阅脚本的基础镜像升到 Python 3.15.2。
+    en: Declares spec 0.7 for provides.egress_proxy and the egress.proxy permission; the subscription helper's base image moves to Python 3.15.2.
   webui:
     service: web
     port: 8080

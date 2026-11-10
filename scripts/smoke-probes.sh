@@ -12,7 +12,8 @@ identity_check() {
   reply="$(dweb /version -H 'Authorization: Bearer obsolete-browser-token')" || return 1
   jq -e '.meta == true and (.version | startswith("v"))' <<<"$reply" >/dev/null || return 1
   reply="$(dweb /subscription/status)" || return 1
-  jq -e '.configured == false and .nodes == 0' <<<"$reply" >/dev/null
+  # 有升级起点时数据目录里已经有订阅（configured=true、可能有节点），这里只看控制器认不认这个身份。
+  jq -e '(.configured | type) == "boolean" and (.nodes | type) == "number"' <<<"$reply" >/dev/null
 }
 
 # 数据：用户数据就是订阅地址——网页接口 /subscription/save 把它落进数据目录的 subscription.url，

@@ -1,6 +1,6 @@
 # 代理 · 云吞插件
 
-开发流程见[插件开发指南](https://github.com/geraldpeng6/wonton-docs/blob/main/develop.md)。
+开发流程见[插件开发指南](https://github.com/wontonapp/wonton-docs/blob/main/develop.md)。
 
 把上游 Mihomo 和 zashboard 接到云吞：订阅入口只负责保存链接和触发更新，节点、流量、连接由原生面板管理。
 Mihomo 和面板分别运行上游官方镜像，不修改上游源码。

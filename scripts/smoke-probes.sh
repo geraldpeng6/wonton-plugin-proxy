@@ -1,9 +1,6 @@
 # shellcheck shell=bash
 # The proxy has a shared controller identity, not application user accounts.
 # A valid controller response proves the gateway supplied its private bearer credential.
-marker_file() { # SMOKE_STATE 在套件里是状态目录（e2e 传的是标记文件本身），标记放对应路径
-  if [[ -d "$SMOKE_STATE" ]]; then printf '%s' "$SMOKE_STATE/proxy-marker"; else printf '%s' "${SMOKE_STATE}.marker"; fi
-}
 
 web_assert() { grep -q '<title>Proxy</title>'; }
 
@@ -40,12 +37,12 @@ data_write() {
   esac
   body="$(proxy_status)" || { echo "读不到订阅状态：$body"; return 1; }
   jq -e '.configured == true' <<<"$body" >/dev/null || { echo "应用没确认订阅已保存：$body"; return 1; }
-  printf '%s' "$marker" >"$(marker_file)"
+  printf '%s' "$marker" >"$SMOKE_STATE"
 }
 
 data_check() {
   local body
-  [[ -s "$(marker_file)" ]] || { echo "没有 data_write 留下的标记"; return 1; }
+  [[ -s "$SMOKE_STATE" ]] || { echo "没有 data_write 留下的标记"; return 1; }
   body="$(proxy_status)" || { echo "读不到订阅状态：$body"; return 1; }
   jq -e '.configured == true' <<<"$body" >/dev/null ||
     { echo "重装后订阅丢了（configured=false）：$body"; return 1; }
